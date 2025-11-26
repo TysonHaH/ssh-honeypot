@@ -68,11 +68,7 @@ def emulated_shell(channel, client_ip, username):
 
     def sendln_delay(text, delay=0.05):
         for line in text.splitlines():
-<<<<<<< HEAD
             send(line + '\r\n')
-=======
-            send((line + '\r\n'))
->>>>>>> 2d479b219774e614cb8c3f6f7adbf6bde298add9
             time.sleep(delay)
 
     def sendln(text):
