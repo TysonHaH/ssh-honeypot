@@ -10,7 +10,10 @@ import json
 import time
 
 # Constants
-logging_format = logging.Formatter('%(message)s')
+logging_format = logging.Formatter(
+    '[%(asctime)s] [LOGIN ATTEMPT] %(message)s',
+    '%Y-%m-%d %H:%M:%S'
+)
 SSH_BANNER = "SSH-2.0-MySSHServer_1.1"
 host_key = paramiko.RSAKey(filename='../key/server.key')
 
@@ -51,7 +54,7 @@ def log_command(ip, username, command):
         "command": command
     }
     with open('../log/cmd_logs.json', 'a') as f:
-        f.write(json.dumps(log_entry) + '\\n')
+        f.write(json.dumps(log_entry) + '\n')
 
     if is_dangerous(command):
         alert_logger.warning(f"[{timestamp}] [DANGER] [{ip}] {command}")
@@ -65,14 +68,14 @@ def emulated_shell(channel, client_ip, username):
 
     def sendln_delay(text, delay=0.05):
         for line in text.splitlines():
-            send((line + '\r\n').encode())
+            send(line + '\r\n')
             time.sleep(delay)
 
     def sendln(text):
         channel.send(text.encode() + b'\r\n')
 
     fake_fs = {
-        'custardA.config': 'CONFIG: allow_remote_root=1',
+        'hahoangquan.config': 'CONFIG: allow_remote_root=1',
         'flag.txt': 'CTF{you_found_me}',
         'notes.txt': 'todo: upload backdoor\r\ncheck crontab'
     }
