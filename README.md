@@ -1,70 +1,70 @@
 # SSH Honeypot
 
-Dự án SSH Honeypot tương tác được viết bằng Python (sử dụng thư viện Paramiko), giúp giả lập một máy chủ SSH để thu hút, đánh lừa kẻ tấn công. Hệ thống sẽ ghi lại các nỗ lực xâm nhập (brute-force) cũng như toàn bộ câu lệnh kẻ tấn công thực thi trong môi trường shell giả lập.
+An interactive SSH Honeypot written in Python using the Paramiko library. It emulates an SSH server to attract, deceive, and monitor attackers. The system logs intrusion attempts (such as brute-force attacks) and records every command executed by the attacker within its custom emulated shell environment.
 
-## Tính năng nổi bật
+## Key Features
 
-- **Giả lập SSH Server**: Đóng giả một máy chủ Ubuntu (OpenSSH) và tiếp nhận mọi kết nối. Hỗ trợ xác thực bằng tài khoản/mật khẩu chỉ định (hoặc từ điển).
-- **Emulated Shell (Shell Giả lập)**: Cung cấp môi trường shell ảo để kẻ tấn công tương tác sau khi đăng nhập thành công.
-  - Phản hồi các câu lệnh hệ thống cơ bản (`ls`, `pwd`, `whoami`, `uname`, `ifconfig`...).
-  - Môi trường tệp tin giả (fake filesystem) cho phép đọc `flag.txt`, cấu hình hệ thống...
-  - Xử lý mượt các thao tác phím điều hướng (arrow keys), backspace, và lịch sử câu lệnh.
-- **Ghi nhật ký chi tiết**:
-  - `auth.log`: Lưu trữ thông tin đăng nhập (IP, username, password).
-  - `cmd_logs.csv` / `cmd_logs.json`: Ghi lại chi tiết mọi câu lệnh kẻ tấn công đã gõ kèm theo timestamp.
-  - `alerts.log`: Hệ thống cảnh báo tự động khi phát hiện các lệnh nguy hiểm (tải payload, xóa file, v.v.).
-- **Công cụ phân tích (`analyze_logs.py`)**: Tự động phân tích file log để thống kê các IP thực hiện hành vi brute-force và trích xuất danh sách các lệnh cực kỳ nguy hiểm.
+- **SSH Server Emulation**: Emulates an Ubuntu (OpenSSH) server to accept incoming connections. Supports authentication using a specific username/password or a credentials dictionary.
+- **Emulated Shell**: Provides a virtual shell environment for attackers to interact with after a successful login.
+  - Responds to basic system commands (`ls`, `pwd`, `whoami`, `uname`, `ifconfig`, etc.).
+  - Includes a fake filesystem where attackers can discover and read files like `flag.txt` or system configurations.
+  - Smoothly handles terminal navigation (arrow keys), backspace, and command history.
+- **Detailed Logging**:
+  - `auth.log`: Records authentication attempts (IP, username, password).
+  - `cmd_logs.csv` / `cmd_logs.json`: Logs every command submitted by the attacker, complete with timestamps.
+  - `alerts.log`: Triggers automated alerts when highly dangerous commands are detected (e.g., downloading payloads, deleting files).
+- **Analysis Tool (`analyze_logs.py`)**: Automatically parses log files to identify IP addresses performing brute-force attacks and extracts lists of potentially harmful command executions.
 
-## Cấu trúc thư mục
+## Directory Structure
 
-- `src/`: Thư mục mã nguồn chính.
-  - `honeypy.py`: Tệp khởi chạy chính của chương trình.
-  - `ssh_honeypot.py`: Core xử lý server, paramiko và emulated shell.
-  - `analyze_logs.py`: Script đọc và phân tích dữ liệu log.
-- `key/`: Nơi lưu trữ khóa RSA (`server.key`) định danh cho SSH Server.
-- `log/`: Nơi xuất và chứa các tập tin nhật ký (`auth.log`, `alerts.log`, `cmd_logs.csv`...).
+- `src/`: Main source code directory.
+  - `honeypy.py`: The main entry script of the program.
+  - `ssh_honeypot.py`: The core script that manages the server, Paramiko connection, and emulated shell logic.
+  - `analyze_logs.py`: Script for parsing and analyzing log data.
+- `key/`: Stores the RSA key (`server.key`) used to identify the SSH Server.
+- `log/`: Stores all generated log files (`auth.log`, `alerts.log`, `cmd_logs.csv`, etc.).
 
-## Yêu cầu và Cài đặt
+## Requirements and Installation
 
-1. Yêu cầu **Python 3.x**
-2. Cài đặt các thư viện phụ thuộc:
+1. **Python 3.x**
+2. Install the required dependencies:
 ```bash
 pip install paramiko
 ```
-3. Đảm bảo bạn đã có khóa RSA cho máy chủ ở `key/server.key`. Nếu chưa có, hãy tạo mới:
+3. Make sure you have an RSA key for the server located at `key/server.key`. If you don't have one, generate it using the following commands:
 ```bash
 mkdir -p key log
 ssh-keygen -t rsa -f key/server.key
 ```
 
-## Hướng dẫn sử dụng
+## Usage
 
-### 1. Khởi chạy Honeypot
+### 1. Starting the Honeypot
 
-Sử dụng tập tin `honeypy.py` trong thư mục `src`. Cần chỉ định đây là Honeypot loại SSH bằng cờ `-s` / `--ssh`, cờ `-a` (địa chỉ IP) và `-p` (cổng).
+Run the `honeypy.py` script located in the `src` directory. You need to specify that this is an SSH honeypot via the `-s` / `--ssh` flag, along with the `-a` (IP address) and `-p` (port) flags.
 
-**Chạy với tài khoản/mật khẩu tự do (ai đăng nhập vào cũng bị ghi lại thất bại, hoặc bạn muốn gán cứng một account cụ thể):**
+**Run the honeypot to capture authentication attempts:**
 ```bash
 python src/honeypy.py --ssh -a 0.0.0.0 -p 2222
 ```
 
-**Chạy và cho phép các tài khoản cụ thể đăng nhập thành công vào shell:**
+**Run the honeypot and allow specific credentials to successfully log into the emulated shell:**
 ```bash
-# Định nghĩa user là 'root' mật khẩu '123456'
+# Define a specific user 'root' with password '123456'
 python src/honeypy.py --ssh -a 0.0.0.0 -p 2222 -u root -pw 123456
 
-# Hoặc truyền vào file văn bản dạng user:password
+# Or use a text file containing user:password combinations (one per line)
 python src/honeypy.py --ssh -a 0.0.0.0 -p 2222 --creds credentials/users.txt
 ```
 
-### 2. Phân tích kết quả tấn công
+### 2. Analyzing Attack Logs
 
-Bộ script phân tích sẽ giúp nhận diện những IP nào đã cố gắng brute-force mật khẩu (5 lần thử trở lên trong 1 phút) và xem nhanh mọi hành động tải mã độc hay phá hoại.
+The analysis script helps recognize which IPs attempted to brute-force passwords (defined as 5 or more attempts within a minute) and quickly view any payload download attempts or destructive commands.
 
 ```bash
 python src/analyze_logs.py
 ```
-Kết quả hiển thị ví dụ:
+Example Output:
 ```text
 [+] Brute-force Detection:
   - 192.168.1.100 made 8 login attempts around 14:05:01
